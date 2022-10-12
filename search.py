@@ -7,6 +7,8 @@ This way, plugging in root nodes of different types, we can run this A* to
 solve different problems.
 
 """
+import heapq
+from node import Node
 
 
 def Astar(root):
@@ -39,4 +41,36 @@ def Astar(root):
     # You can access the state of a node by `node.state`. (You may also want to store evaluated states)
     # You should consider the states evaluated and the ones in the fringe to avoid repeated calculation in 5. above.
     # You can compare two node states by node1.state == node2.state
-    pass
+
+    que = []
+    vs = []
+    heapq.heapify(que)
+    heapq.heappush(que, (0+root.evaluate_heuristic(), root.g,  0, root))
+    vs.append(root._get_state())
+    ans_node = None
+    ans_cost = -1
+    while len(que) > 0:
+        f, c, id, cur_node = heapq.heappop(que)
+        childs = cur_node.generate_children()
+        for child in childs:
+            if child._get_state() in vs:
+                continue
+            if child.is_goal() == True:
+                ans_cost = child.g
+                ans_node = child
+                break
+            heapq.heappush(que, (child.g+child.evaluate_heuristic(),child.g,  len(vs), child))
+            vs.append(child._get_state())
+        if ans_cost != -1:
+            break
+    if ans_cost == -1:
+        return []
+    ans = []
+    ans.append(ans_node)
+    while ans_node._get_state() != root._get_state():
+        ans_node=ans_node.parent
+        ans.append(ans_node)
+    res = []
+    for node in reversed(ans):
+        res.append(node)
+    return res

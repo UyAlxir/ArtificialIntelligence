@@ -1,3 +1,5 @@
+import copy
+
 from node import Node
 
 
@@ -66,6 +68,28 @@ class FifteensNode(Node):
         # TODO: add your code here
         # You should use self.board to produce children. Don't forget to create a new board for each child
         # e.g you can use copy.deepcopy function from the standard library.
+
+        ax = [0, 1, 0, -1]
+        ay = [1, 0, -1, 0]
+
+        def check(x, y):
+            ans = ( x>= 0 and x<=3 and y>=0 and y<=3 )
+            return ans
+
+        boards = []
+        for x, line in enumerate(self.board):
+            for y, num in enumerate(line):
+                if num == 0:
+                    for i in range(len(ax)):
+                        xx = x + ax[i]
+                        yy = y + ay[i]
+                        if check(xx, yy):
+                            cur = FifteensNode(parent=self, g=self.g+1, board=copy.deepcopy(self.board))
+                            temp = cur.board[x][y]
+                            cur.board[x][y] = cur.board[xx][yy]
+                            cur.board[xx][yy] = temp
+                            boards.append(cur)
+        return boards
         pass
 
     def is_goal(self):
@@ -79,6 +103,12 @@ class FifteensNode(Node):
 
         # TODO: add your code here
         # You should use self.board to decide.
+
+        for x, line in enumerate(self.board):
+            for y, num in enumerate(line):
+                if num != (x*4+y+1)%16:
+                    return False
+        return True
         pass
 
     def evaluate_heuristic(self):
@@ -93,6 +123,20 @@ class FifteensNode(Node):
 
         # TODO: add your code here
         # You may want to use self.board here.
+        dic = {}
+        for i in range(1,16):
+            cur = [(i-1)//4,(i-1)%4]
+            dic[i]=cur
+        dic[0]=[3,3]
+
+        ans = 0
+
+        for x, line in enumerate(self.board):
+            for y, num in enumerate(line):
+                cur = dic[num]
+                ans += abs(x-cur[0])+abs(y-cur[1])
+        ans=ans/2
+        return ans
         pass
 
     def _get_state(self):
@@ -193,7 +237,48 @@ class SuperqueensNode(Node):
         # You should use self.queen_positions and self.n to produce children.
         # Don't forget to create a new queen_positions list for each child.
         # You can use copy.deepcopy function from the standard library.
-        pass
+
+        ax = [-2,-1,1,2,2,1,-1,-2]
+        ay = [-1,-2,-2,-1,1,2,2,1]
+
+        def check(x,y):
+            return x>=0 and y>=0 and x<self.n and y<self.n
+
+        def is_attack(lt, x, y):
+            cnt = 0
+            for i in range(-self.n+1, self.n):
+                yy = y+i
+                xx = x+i
+                if check(yy, xx) and (yy, xx) in lt:
+                    cnt = cnt+1
+                xx = x-i
+                if check(yy, xx) and (yy, xx) in lt:
+                    cnt = cnt+1
+
+            for i in range(len(ax)):
+                yy = y+ay[i]
+                xx = x+ax[i]
+                if check(yy, xx) and (yy, xx) in lt:
+                    cnt = cnt+1
+
+            return cnt
+
+        vs = []
+        for item in self.queen_positions:
+            vs.append(item[1])
+
+        row = len(self.queen_positions)
+        childs = []
+        for i in range(self.n):
+            y = row
+            x = i
+            if x in vs:
+                continue
+            cost = is_attack(self.queen_positions, y, x)
+            cur = SuperqueensNode(parent=self, g=self.g+cost, queen_positions=copy.deepcopy(self.queen_positions), n=self.n)
+            cur.queen_positions.append((y, x))
+            childs.append(cur)
+        return childs
 
     def is_goal(self):
         """Decides whether all the queens are placed on the board.
@@ -205,7 +290,7 @@ class SuperqueensNode(Node):
         """
         # You should use self.queen_positions and self.n to decide.
         # TODO: add your code here
-        pass
+        return len(self.queen_positions) == self.n
 
     def evaluate_heuristic(self):
         """Heuristic function h(n) that estimates the minimum number of conflicts required to reach the final state.
