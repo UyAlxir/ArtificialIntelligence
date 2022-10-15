@@ -55,14 +55,18 @@ def Astar(root):
         for child in childs:
             if child._get_state() in vs:
                 continue
+            if ans_cost != -1 and child.g >= ans_cost:
+                continue
             if child.is_goal() == True:
-                ans_cost = child.g
-                ans_node = child
-                break
+                if ans_cost==-1:
+                    ans_cost = child.g
+                    ans_node = child
+                elif ans_cost > child.g:
+                    ans_cost = child.g
+                    ans_node = child
+                continue
             heapq.heappush(que, (child.g+child.evaluate_heuristic(),child.g,  len(vs), child))
             vs.append(child._get_state())
-        if ans_cost != -1:
-            break
     if ans_cost == -1:
         return []
     ans = []

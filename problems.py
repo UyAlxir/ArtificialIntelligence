@@ -244,9 +244,9 @@ class SuperqueensNode(Node):
         def check(x,y):
             return x>=0 and y>=0 and x<self.n and y<self.n
 
-        def is_attack(lt, x, y):
+        def is_attack(lt, y, x):
             cnt = 0
-            for i in range(-self.n+1, self.n):
+            for i in range(-self.n, self.n+1):
                 yy = y+i
                 xx = x+i
                 if check(yy, xx) and (yy, xx) in lt:
