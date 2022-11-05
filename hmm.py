@@ -87,7 +87,7 @@ class HMM(HMM_Meta):
         # TODO: add your code here
         # Multiply probs with the transition matrix (matrix multiplication) and store the result in predicted_probs
         # You can do that with one line of code using NumPy
-
+        predicted_probs = np.matmul(self.trans_probs, probs.T).T
         return predicted_probs
 
     def update(self, probs, o):
@@ -116,7 +116,11 @@ class HMM(HMM_Meta):
         # TODO: add your code here
         # Multiply (element-wise) probs with the observation probabilities P(O^{b}_{t}=o[b]|S_{t}) for each beacon b
         # and store the result in updated_probs.
-
+        for id, item in enumerate(updated_probs):
+            cur = 1
+            for i in range(self.n_beacons):
+                cur = cur * self.obs_probs[i, o[i], id]
+            updated_probs.data[id] = cur * probs[id]
         return updated_probs
 
     def monitor(self, T, observations):
@@ -147,7 +151,15 @@ class HMM(HMM_Meta):
         #     Predict monitoring_probs[t]
         #     Update monitoring_probs[t]
         #     Normalize monitoring_probs[t]
-
+        monitoring_probs[0]=self.init_probs
+        for i in range(1, T):
+            monitoring_probs[i]=np.copy(monitoring_probs[i-1])
+            predict_probs = self.predict(monitoring_probs[i])
+            updated_probs = self.update(predict_probs, observations[i])
+            sm = updated_probs.sum()
+            for k in range(len(updated_probs)):
+                updated_probs[k] /= sm
+            monitoring_probs[i] = updated_probs
         return monitoring_probs
 
     def postdict(self, probs):
